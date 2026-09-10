@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, ChevronDown, Plus, Upload, X } from "lucide-react";
+import { CheckCircle2, Plus, Upload, X } from "lucide-react";
 import { Card, Field, PrimaryButton } from "@/components/ui";
 import TopBar from "@/components/TopBar";
 import { cn } from "@/lib/utils";
@@ -31,9 +31,7 @@ function CheckinInner({
 }) {
   const params = useSearchParams();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [roomNumber, setRoomNumber] = useState(
-    presetRoom ?? params.get("room") ?? "",
-  );
+  const [roomNumbers, setRoomNumbers] = useState<string[]>([]);
   const [token, setToken] = useState(params.get("token") ?? presetToken ?? "");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -51,17 +49,23 @@ function CheckinInner({
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [existingProofs, setExistingProofs] = useState(0);
-  const [done, setDone] = useState(false);
+  const [doneRooms, setDoneRooms] = useState<string[]>([]);
+
+  const sortedRooms = useMemo(
+    () => [...roomNumbers].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+    [roomNumbers],
+  );
 
   useEffect(() => {
     const r = params.get("room");
     const t = params.get("token");
-    if (r) setRoomNumber(r);
+    if (r) setRoomNumbers((prev) => (prev.includes(r) ? prev : [...prev, r]));
     if (t) setToken(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
   useEffect(() => {
-    if (presetRoom) setRoomNumber(presetRoom);
+    if (presetRoom) setRoomNumbers((prev) => (prev.includes(presetRoom) ? prev : [...prev, presetRoom]));
     if (presetToken) setToken(presetToken);
   }, [presetRoom, presetToken]);
 
@@ -72,7 +76,7 @@ function CheckinInner({
       .then((d) => {
         const list: Room[] = d.rooms ?? [];
         setRooms(list);
-        if (!roomNumber && list.length === 1) setRoomNumber(list[0].number);
+        if (list.length === 1) setRoomNumbers([list[0].number]);
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,7 +91,7 @@ function CheckinInner({
       .then((d) => {
         const st = d?.stay as Stay | undefined;
         if (!st) return;
-        setRoomNumber(st.roomNumber ?? "");
+        setRoomNumbers((prev) => (prev.includes(st.roomNumber) ? prev : [...prev, st.roomNumber]));
         setName(st.clientName ?? "");
         setPhone(st.clientPhone ?? "");
         setEmail(st.clientEmail ?? "");
@@ -119,8 +123,12 @@ function CheckinInner({
     return () => urls.forEach((u) => u && URL.revokeObjectURL(u));
   }, [files]);
 
+  function toggleRoom(n: string) {
+    setRoomNumbers((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
+  }
+
   // ---------- validation (mandatory fields go red) ----------
-  const roomOk = roomNumber.trim().length > 0;
+  const roomsOk = sortedRooms.length > 0;
   const nameOk = name.trim().length > 0;
   const phoneOk = phone.replace(/\D/g, "").length >= 10;
   const emailOk = EMAIL_RE.test(email.trim());
@@ -140,7 +148,7 @@ function CheckinInner({
     (m) => m.name.trim() && !memberIssue(m).phone && !memberIssue(m).email,
   );
   const allOk =
-    roomOk && nameOk && phoneOk && emailOk && cityOk && idNumberOk && proofsOk && membersOk;
+    roomsOk && nameOk && phoneOk && emailOk && cityOk && idNumberOk && proofsOk && membersOk;
 
   async function submit() {
     setTried(true);
@@ -152,14 +160,14 @@ function CheckinInner({
     try {
       const idProofUrls: string[] = [];
       for (const f of files.slice(0, 3)) {
-        idProofUrls.push(await uploadIdProof(f, token || roomNumber));
+        idProofUrls.push(await uploadIdProof(f, token || sortedRooms[0] || "room"));
       }
       const res = await fetch("/api/stays", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token: token || undefined,
-          roomNumber: roomNumber.trim(),
+          roomNumbers: sortedRooms,
           name: name.trim(),
           phone: phone.trim(),
           email: email.trim(),
@@ -182,7 +190,8 @@ function CheckinInner({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Submit failed");
-      setDone(true);
+      const done = (data.stays ?? [data.stay]).filter(Boolean).map((s: Stay) => s.roomNumber);
+      setDoneRooms(done.length ? done : sortedRooms);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -190,38 +199,17 @@ function CheckinInner({
     }
   }
 
-  if (done) {
+  if (doneRooms.length > 0) {
     return (
       <div className="mx-auto w-full max-w-md px-5 py-10">
         <Card className="text-center">
           <CheckCircle2 size={40} className="mx-auto text-[#1f6f4a]" />
           <h1 className="mt-2 text-xl font-bold">Checked in 🎉</h1>
           <p className="mt-1 text-sm text-[#6b6f6b]">
-            Room {roomNumber} · {name}. Your details are saved with the front desk.
-            Enjoy your stay!
+            Room{doneRooms.length > 1 ? "s" : ""} {doneRooms.join(", ")} · {name}.
+            Your details are saved with the front desk. Enjoy your stay!
           </p>
-          <PrimaryButton
-            className="mt-4"
-            onClick={() => {
-              // Same guest staying in another room too: collect details
-              // for that room (one entry per room per day).
-              setDone(false);
-              setRoomNumber("");
-              setToken("");
-              setMembers([]);
-              setFiles([]);
-              setExistingProofs(0);
-              setTried(false);
-              setEmailTouched(false);
-              window.scrollTo({ top: 0 });
-            }}
-          >
-            Details for another room
-          </PrimaryButton>
-          <p className="-mt-1 mb-1 text-center text-xs text-[#6b6f6b]">
-            Staying in 2 rooms? Fill this same form for the other room too.
-          </p>
-          <Link href="/" className="btn-ghost mt-2 inline-block w-full">
+          <Link href="/" className="btn-ghost mt-4 inline-block w-full">
             ← Back to home
           </Link>
         </Card>
@@ -234,120 +222,125 @@ function CheckinInner({
       <TopBar title="Guest check-in" fallback="/" />
       <h1 className="mt-2 text-[22px] font-bold">Your stay details</h1>
       <p className="text-sm text-[#6b6f6b]">
-        One entry per room per day. Fill once for everyone in the room.
+        One entry per room per day. Taking 2 rooms? Select both — fill once.
       </p>
 
       <div className="mt-4 grid gap-3">
-        {/* 1 — Guest details (all mandatory) */}
+        {/* 1 — Rooms first (multi-select), from admin inventory */}
         <Card className="grid gap-3">
           <Field
-            label="Room number *"
-            error={tried && !roomOk ? "Please select your room" : undefined}
+            label="Your room(s) * — tap all yours"
+            error={tried && !roomsOk ? "Select at least one room" : undefined}
           >
             {rooms.length > 0 ? (
-              <div className="relative">
-                <select
-                  className={cn(
-                    "input appearance-none pr-10",
-                    tried && !roomOk && "input-error",
-                  )}
-                  value={roomNumber}
-                  onChange={(e) => setRoomNumber(e.target.value)}
-                >
-                  <option value="">Select your room…</option>
-                  {rooms.map((r) => (
-                    <option key={r.id} value={r.number}>
-                      Room {r.number} · {r.type}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b6f6b]"
-                />
+              <div className="flex flex-wrap gap-2">
+                {rooms.map((r) => {
+                  const on = roomNumbers.includes(r.number);
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => toggleRoom(r.number)}
+                      className={cn(
+                        "rounded-[10px] border px-4 py-2.5 text-[15px] font-bold",
+                        on
+                          ? "border-[#1f6f4a] bg-[#1f6f4a] text-white"
+                          : tried && !roomsOk
+                            ? "border-[#d92d20] bg-[#fffafa]"
+                            : "border-[#e8e8e4] bg-white",
+                      )}
+                    >
+                      {r.number}
+                      <span className={cn("ml-1.5 text-xs font-semibold", on ? "text-white/80" : "text-[#6b6f6b]")}>
+                        {r.type}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <input
-                className={cn("input", tried && !roomOk && "input-error")}
+                className={cn("input", tried && !roomsOk && "input-error")}
                 inputMode="numeric"
                 placeholder="e.g. 101"
-                value={roomNumber}
-                onChange={(e) => setRoomNumber(e.target.value)}
+                value={roomNumbers[0] ?? ""}
+                onChange={(e) => setRoomNumbers(e.target.value ? [e.target.value] : [])}
               />
             )}
           </Field>
-          <Field
-            label="Your full name *"
-            error={tried && !nameOk ? "Please enter your name" : undefined}
-          >
-            <input
-              className={cn("input", tried && !nameOk && "input-error")}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="As per govt ID"
-              autoComplete="name"
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <Field
-              label="Mobile number *"
-              error={tried && !phoneOk ? "10-digit number needed" : undefined}
+              label="Your full name *"
+              error={tried && !nameOk ? "Please enter your name" : undefined}
             >
               <input
-                className={cn("input", tried && !phoneOk && "input-error")}
-                inputMode="tel"
-                placeholder="10-digit mobile"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                autoComplete="tel"
+                className={cn("input", tried && !nameOk && "input-error")}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="As per govt ID"
+                autoComplete="name"
               />
             </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Mobile number *"
+                error={tried && !phoneOk ? "10-digit number needed" : undefined}
+              >
+                <input
+                  className={cn("input", tried && !phoneOk && "input-error")}
+                  inputMode="tel"
+                  placeholder="10-digit mobile"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
+                />
+              </Field>
+              <Field
+                label="Email *"
+                error={showEmailError ? "Valid email needed" : undefined}
+              >
+                <input
+                  className={cn("input", showEmailError && "input-error")}
+                  inputMode="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmailTouched(true)}
+                  autoComplete="email"
+                />
+              </Field>
+            </div>
             <Field
-              label="Email *"
-              error={showEmailError ? "Valid email needed" : undefined}
+              label="City *"
+              error={tried && !cityOk ? "Which city are you from?" : undefined}
             >
               <input
-                className={cn("input", showEmailError && "input-error")}
-                inputMode="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => setEmailTouched(true)}
-                autoComplete="email"
+                className={cn("input", tried && !cityOk && "input-error")}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g. Jaipur"
+                autoComplete="address-level2"
               />
             </Field>
-          </div>
-          <Field
-            label="City *"
-            error={tried && !cityOk ? "Which city are you from?" : undefined}
-          >
-            <input
-              className={cn("input", tried && !cityOk && "input-error")}
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Jaipur"
-              autoComplete="address-level2"
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Age">
-              <input
-                className="input"
-                inputMode="numeric"
-                placeholder="Years"
-                value={guestAge}
-                onChange={(e) => setGuestAge(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              />
-            </Field>
-            <Field label="Date of birth">
-              <input
-                className="input"
-                type="date"
-                value={guestDob}
-                onChange={(e) => setGuestDob(e.target.value)}
-              />
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Age">
+                <input
+                  className="input"
+                  inputMode="numeric"
+                  placeholder="Years"
+                  value={guestAge}
+                  onChange={(e) => setGuestAge(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                />
+              </Field>
+              <Field label="Date of birth">
+                <input
+                  className="input"
+                  type="date"
+                  value={guestDob}
+                  onChange={(e) => setGuestDob(e.target.value)}
+                />
+              </Field>
+            </div>
           </div>
         </Card>
 
@@ -434,7 +427,7 @@ function CheckinInner({
             <div>
               <p className="text-[13px] font-bold">Companions</p>
               <p className="text-xs text-[#6b6f6b]">
-                Everyone in Room {roomNumber || "…"} — name mandatory, phone/email optional
+                Everyone in {sortedRooms.length > 1 ? `Rooms ${sortedRooms.join(", ")}` : `Room ${sortedRooms[0] || "…"}`} — name mandatory, phone/email optional
               </p>
             </div>
             <button
@@ -530,7 +523,11 @@ function CheckinInner({
         </Card>
 
         <PrimaryButton disabled={busy} onClick={submit}>
-          {busy ? "Saving…" : `Confirm · Check in Room ${roomNumber || "…"}`}
+          {busy
+            ? "Saving…"
+            : sortedRooms.length > 1
+              ? `Confirm · Check in ${sortedRooms.length} rooms (${sortedRooms.join(", ")})`
+              : `Confirm · Check in Room ${sortedRooms[0] || "…"}`}
         </PrimaryButton>
         <p className="text-center text-xs text-[#6b6f6b]">
           By confirming you agree your stay details are shared with the property.

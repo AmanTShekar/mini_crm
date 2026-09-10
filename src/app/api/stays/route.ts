@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getStayByToken,
+  listRooms,
   listStays,
   listStaysByDate,
   searchStays,
@@ -30,7 +31,15 @@ export async function POST(req: Request) {
     const body = await req.json();
     const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
 
-    if (!body.roomNumber) return fail("Room number is required");
+    // One submit can cover MULTIPLE rooms (guest takes 2 rooms, fills once).
+    const rawList: any[] = Array.isArray(body.roomNumbers) ? body.roomNumbers : [];
+    const rawRooms: string[] = rawList.length
+      ? rawList.map((r) => String(r).trim()).filter(Boolean)
+      : body.roomNumber
+        ? [String(body.roomNumber).trim()]
+        : [];
+    const roomNumbers = [...new Set(rawRooms)];
+    if (!roomNumbers.length) return fail("Select at least one room");
     if (!body.name?.trim()) return fail("Full name is required");
     if (!String(body.phone ?? "").replace(/\D/g, "").match(/^\d{10,}$/))
       return fail("A valid 10-digit mobile number is required");
@@ -51,33 +60,57 @@ export async function POST(req: Request) {
         return fail(`Invalid phone for companion ${m.name}`);
     }
 
-    const stay = await submitCheckin({
-      token: body.token,
-      roomNumber: String(body.roomNumber),
+    // Validate ALL rooms exist first — no partial bookings.
+    const rooms = await listRooms();
+    const valid = new Set(rooms.map((r) => r.number));
+    for (const rn of roomNumbers) {
+      if (!valid.has(rn)) return fail(`Room ${rn} doesn't exist`);
+    }
+
+    const cleanMembers = members
+      .filter((m: any) => m?.name?.trim())
+      .map((m: any) => ({
+        name: String(m.name).trim(),
+        age: m.age?.trim() || undefined,
+        relation: m.relation?.trim() || undefined,
+        phone: m.phone?.trim() || undefined,
+        email: m.email?.trim() || undefined,
+        idType: m.idType || undefined,
+        idNumber: m.idNumber?.trim() || undefined,
+      }));
+
+    // A personal-link token belongs to its original room only.
+    const tokenStay = body.token
+      ? await getStayByToken(String(body.token))
+      : undefined;
+
+    const base = {
       name: String(body.name).trim(),
       phone: String(body.phone).trim(),
       email: String(body.email).trim(),
-      address: body.address?.trim() || undefined,
       city: String(body.city).trim(),
       guestAge: body.guestAge?.trim() || undefined,
       guestDob: body.guestDob || undefined,
+      address: body.address?.trim() || undefined,
       idType: body.idType,
       idNumber: String(body.idNumber).trim(),
       idProofUrls: body.idProofUrls,
-      members: members
-        .filter((m: any) => m?.name?.trim())
-        .map((m: any) => ({
-          name: String(m.name).trim(),
-          age: m.age?.trim() || undefined,
-          relation: m.relation?.trim() || undefined,
-          phone: m.phone?.trim() || undefined,
-          email: m.email?.trim() || undefined,
-          idType: m.idType || undefined,
-          idNumber: m.idNumber?.trim() || undefined,
-        })),
+      members: cleanMembers,
       notes: body.notes,
-    });
-    return NextResponse.json({ stay });
+    };
+
+    const stays = [];
+    for (const rn of roomNumbers) {
+      stays.push(
+        await submitCheckin({
+          ...base,
+          roomNumber: rn,
+          token:
+            tokenStay && tokenStay.roomNumber === rn ? tokenStay.token : undefined,
+        }),
+      );
+    }
+    return NextResponse.json({ stays, stay: stays[0] });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Failed" },
