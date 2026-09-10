@@ -2,7 +2,7 @@
  * Only caches public guest pages (/, /checkin) and static assets.
  * Admin pages and /c/[token] links are NEVER cached (private data). */
 
-const CACHE = "staycrm-v6";
+const CACHE = "staycrm-v7";
 const CORE = ["/", "/checkin", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 // Navigations give up after 8s and fall back to cache — the app
