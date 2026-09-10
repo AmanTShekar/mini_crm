@@ -23,7 +23,7 @@ export default async function GuestDetail({ params }: { params: Promise<{ id: st
     <div className="grid gap-3">
       <TopBar title="Guest file" fallback="/admin/guests" />
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-[22px] font-bold">{stay.clientName}</h1>
             {stay.isRevisit && (
@@ -42,9 +42,24 @@ export default async function GuestDetail({ params }: { params: Promise<{ id: st
       <Card className="grid gap-2">
         <Row k="Phone" v={stay.clientPhone} />
         <Row k="Email" v={stay.clientEmail ?? "—"} />
-        <Row k="Address" v={stay.address ?? "—"} />
+        <Row k="City" v={stay.city ?? "—"} />
+        <Row k="Age" v={stay.guestAge ?? "—"} />
+        <Row k="DOB" v={stay.guestDob ?? "—"} />
         <Row k="ID" v={stay.idType ? `${stay.idType} · ${stay.idNumber ?? ""}` : "—"} />
-        <Row k="Guests" v={stay.members.length ? stay.members.map((m) => m.name).join(", ") : stay.clientName} />
+        <Row
+          k="Guests"
+          v={
+            stay.members.length
+              ? stay.members
+                  .map((m) =>
+                    [m.name, m.phone, m.idNumber ? `${m.idType ?? "ID"} ${m.idNumber}` : ""]
+                      .filter(Boolean)
+                      .join(" · "),
+                  )
+                  .join(", ")
+              : stay.clientName
+          }
+        />
         <Row k="Link" v={link} mono />
         <div className="mt-1 flex flex-wrap gap-2">
           <CallButton phone={stay.clientPhone} label={stay.clientPhone} />

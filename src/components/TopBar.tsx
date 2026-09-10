@@ -30,7 +30,7 @@ export default function TopBar({
       >
         <ArrowLeft size={18} />
       </button>
-      <p className="truncate text-[15px] font-bold">{title}</p>
+      <p className="min-w-0 flex-1 truncate text-[15px] font-bold">{title}</p>
       {right && <div className="ml-auto shrink-0">{right}</div>}
     </div>
   );

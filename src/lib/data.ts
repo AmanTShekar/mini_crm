@@ -246,10 +246,13 @@ export async function submitCheckin(input: {
   phone: string;
   email?: string;
   address?: string;
+  city?: string;
+  guestAge?: string;
+  guestDob?: string;
   idType?: string;
   idNumber?: string;
   idProofUrls?: string[];
-  members?: { name: string; age?: string; relation?: string }[];
+  members?: { name: string; age?: string; relation?: string; phone?: string; email?: string; idType?: string; idNumber?: string }[];
   notes?: string;
 }): Promise<Stay> {
   const s = store();
@@ -298,9 +301,12 @@ export async function submitCheckin(input: {
       clientPhone: input.phone,
       clientEmail: input.email,
       address: input.address,
+      city: input.city,
+      guestAge: input.guestAge,
+      guestDob: input.guestDob,
       idType: input.idType,
       idNumber: input.idNumber,
-      idProofUrls: input.idProofUrls ?? stay.idProofUrls,
+      idProofUrls: input.idProofUrls?.length ? input.idProofUrls : stay.idProofUrls,
       members: input.members?.length ? input.members : [{ name: input.name }],
       status: "checked_in" as StayStatus,
       isRevisit,
@@ -317,6 +323,9 @@ export async function submitCheckin(input: {
       clientPhone: input.phone,
       clientEmail: input.email,
       address: input.address,
+      city: input.city,
+      guestAge: input.guestAge,
+      guestDob: input.guestDob,
       idType: input.idType,
       idNumber: input.idNumber,
       idProofUrls: input.idProofUrls ?? [],

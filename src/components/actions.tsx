@@ -78,7 +78,7 @@ export function InviteBox({
       </p>
       <div className="mt-2 flex gap-2">
         <input
-          className="input"
+          className="input min-w-0 flex-1"
           inputMode="tel"
           placeholder="Guest phone, e.g. 98765 43210"
           value={phone}

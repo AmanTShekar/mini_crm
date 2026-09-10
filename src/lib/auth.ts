@@ -5,7 +5,20 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@stay.local";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
 const ADMIN_NAME = process.env.ADMIN_NAME ?? "Property Admin";
 
+function getSecret(): string {
+  const s = process.env.NEXTAUTH_SECRET;
+  if (s) return s;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Missing NEXTAUTH_SECRET. Copy .env.example to .env (local) or set env vars on Vercel (see README).",
+    );
+  }
+  console.warn("[auth] NEXTAUTH_SECRET missing — dev-only fallback in use. Set it in .env.");
+  return "dev-only-insecure-secret-set-NEXTAUTH_SECRET-in-prod";
+}
+
 export const authOptions: NextAuthOptions = {
+  secret: getSecret(),
   session: { strategy: "jwt" },
   pages: { signIn: "/admin/login" },
   providers: [

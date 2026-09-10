@@ -28,6 +28,10 @@ export interface StayMember {
   name: string;
   age?: string;
   relation?: string;
+  phone?: string;
+  email?: string;
+  idType?: string;
+  idNumber?: string;
 }
 
 export interface Stay {
@@ -40,22 +44,16 @@ export interface Stay {
   clientPhone: string;
   clientEmail?: string;
   address?: string;
+  city?: string;
+  guestAge?: string;
+  guestDob?: string;
   idType?: string;
   idNumber?: string;
   idProofUrls: string[];
   members: StayMember[];
   checkInDate: string; // YYYY-MM-DD
-  checkOutDate?: string;
   status: StayStatus;
   notes?: string;
   isRevisit: boolean;
   createdAt: string;
-}
-
-export interface OtpSession {
-  phone: string;
-  roomNumber: string;
-  code: string;
-  expiresAt: number;
-  verified: boolean;
 }

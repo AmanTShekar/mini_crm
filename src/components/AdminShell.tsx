@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import InstallPrompt from "./InstallPrompt";
 
 const NAV = [
   { href: "/admin", label: "Today", icon: LayoutDashboard, exact: true },
@@ -49,6 +50,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </p>
           <p className="text-lg font-bold">Admin</p>
         </div>
+        <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#9a9d9a]">
+          Manage
+        </p>
         {NAV.map((n) => {
           const active = n.exact ? pathname === n.href : pathname.startsWith(n.href);
           return (
@@ -66,12 +70,15 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           );
         })}
         <div className="my-2 border-t border-[#e8e8e4]" />
+        <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#9a9d9a]">
+          Account
+        </p>
         <Link
           href="/checkin"
           className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[15px] font-semibold text-[#3d403d] hover:bg-[#f1f1ee]"
         >
           <QrCode size={18} />
-          Guest form
+          Guest check-in
         </Link>
         <button
           onClick={logout}
@@ -80,6 +87,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <LogOut size={18} />
           Sign out
         </button>
+        <div className="pt-1">
+          <InstallPrompt compact />
+        </div>
         <div className="mt-auto truncate px-2 text-xs text-[#6b6f6b]">
           {session?.user?.email ?? "Admin"}
         </div>
@@ -144,7 +154,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 className="flex items-center gap-3 rounded-[10px] px-3 py-3 text-[16px] font-semibold text-[#3d403d] hover:bg-[#f1f1ee]"
               >
                 <QrCode size={19} />
-                Guest form
+                Guest check-in
               </Link>
               <button
                 onClick={logout}
@@ -153,6 +163,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 <LogOut size={19} />
                 Sign out
               </button>
+              <div className="pt-1" onClick={() => setOpen(false)}>
+                <InstallPrompt compact />
+              </div>
             </div>
           </div>
         )}
