@@ -176,10 +176,10 @@ function GuestsInner() {
           <div className="grid gap-2 md:grid-cols-2">
             {crm.pending.slice(0, 4).map((s) => (
               <Card key={s.id} className="flex !border-[#f0ddb8] !p-3 flex-col">
-                <p className="font-bold">
+                <p className="break-words font-bold">
                   Room {s.roomNumber} · {s.clientName}
                 </p>
-                <p className="text-xs text-[#6b6f6b]">
+                <p className="break-words text-xs text-[#6b6f6b]">
                   {s.clientPhone} · invited {s.checkInDate}
                 </p>
                 <div className="mt-auto flex flex-wrap gap-2 pt-2">

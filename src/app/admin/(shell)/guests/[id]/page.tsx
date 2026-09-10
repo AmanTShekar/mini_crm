@@ -93,7 +93,7 @@ function Row({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div className="flex justify-between gap-3 border-b border-[#f1f1ee] py-1.5 text-sm last:border-0">
       <span className="shrink-0 font-semibold text-[#6b6f6b]">{k}</span>
-      <span className={`text-right font-semibold ${mono ? "break-all font-mono text-[12px]" : ""}`}>{v}</span>
+      <span className={`min-w-0 break-words text-right font-semibold ${mono ? "font-mono text-[12px]" : ""}`}>{v}</span>
     </div>
   );
 }

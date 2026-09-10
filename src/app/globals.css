@@ -21,6 +21,25 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* App-wide layout guard: a single-column grid must never grow past its
+   container. Implicit `auto` columns size to the widest child's min-content
+   (e.g. a horizontal card scroller), which stretched whole pages sideways.
+   minmax(0,1fr) renders identically when content fits — it only caps
+   overflow. Grids with explicit columns (grid-cols-*, md:grid-cols-*) are
+   already safe and untouched. */
+.grid:not([class*="grid-cols-"]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Notch / home-indicator safe areas for installed (standalone) mode.
+   env() is 0 on normal browsers, so these are no-ops there. */
+.page-top {
+  padding-top: calc(1.5rem + env(safe-area-inset-top));
+}
+.page-top-lg {
+  padding-top: calc(2.5rem + env(safe-area-inset-top));
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -35,6 +54,7 @@ body {
 
 .input {
   width: 100%;
+  min-width: 0;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 10px;

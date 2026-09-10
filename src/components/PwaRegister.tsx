@@ -2,10 +2,11 @@
 
 import { useEffect } from "react";
 
-/** Registers /sw.js in production only (avoids stale caches during dev). */
+/** Registers /sw.js (skipped only if the browser has no SW support).
+ * The handler caches versioned statics + the two public guest pages
+ * (network-first), so dev HMR and fresh HTML keep working. */
 export default function PwaRegister() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
