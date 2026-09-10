@@ -203,7 +203,8 @@ function CheckinInner({
           <PrimaryButton
             className="mt-4"
             onClick={() => {
-              // Book another room with the same details (multi-room stay)
+              // Same guest staying in another room too: collect details
+              // for that room (one entry per room per day).
               setDone(false);
               setRoomNumber("");
               setToken("");
@@ -215,8 +216,11 @@ function CheckinInner({
               window.scrollTo({ top: 0 });
             }}
           >
-            Book another room
+            Details for another room
           </PrimaryButton>
+          <p className="-mt-1 mb-1 text-center text-xs text-[#6b6f6b]">
+            Staying in 2 rooms? Fill this same form for the other room too.
+          </p>
           <Link href="/" className="btn-ghost mt-2 inline-block w-full">
             ← Back to home
           </Link>
