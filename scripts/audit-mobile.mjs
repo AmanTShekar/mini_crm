@@ -9,8 +9,9 @@ const BASE = process.env.AUDIT_BASE || "http://localhost:3102";
 const OUT = "C:\\Users\\Asus\\AppData\\Local\\Temp";
 
 const browser = await chromium.launch({ executablePath: EXE });
+const VW = Number(process.env.AUDIT_VW || 360);
 const page = await browser.newPage({
-  viewport: { width: 360, height: 740 },
+  viewport: { width: VW, height: 740 },
   isMobile: true,
   hasTouch: true,
 });

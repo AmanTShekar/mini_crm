@@ -8,9 +8,14 @@ const ADMIN_NAME = process.env.ADMIN_NAME ?? "Property Admin";
 function getSecret(): string {
   const s = process.env.NEXTAUTH_SECRET;
   if (s) return s;
+  // Never break `next build` (e.g. Vercel) when env vars aren't set yet.
+  // Auth calls will fail at runtime until NEXTAUTH_SECRET is configured.
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return "build-time-placeholder-not-used-at-runtime";
+  }
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "Missing NEXTAUTH_SECRET. Copy .env.example to .env (local) or set env vars on Vercel (see README).",
+      "Missing NEXTAUTH_SECRET. Set env vars on Vercel (see README) or in .env locally.",
     );
   }
   console.warn("[auth] NEXTAUTH_SECRET missing — dev-only fallback in use. Set it in .env.");

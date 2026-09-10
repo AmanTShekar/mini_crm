@@ -2,11 +2,13 @@
 
 import { useEffect } from "react";
 
-/** Registers /sw.js (skipped only if the browser has no SW support).
- * The handler caches versioned statics + the two public guest pages
- * (network-first), so dev HMR and fresh HTML keep working. */
+/** Registers /sw.js in production only.
+ * Dev builds (Turbopack) change chunk graphs constantly — caching them
+ * poisons HMR with stale-module crashes. Production chunks are hashed
+ * and immutable, so caching there is safe. */
 export default function PwaRegister() {
   useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
