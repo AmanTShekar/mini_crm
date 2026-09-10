@@ -32,6 +32,7 @@ function CheckinInner({
   const params = useSearchParams();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomNumbers, setRoomNumbers] = useState<string[]>([]);
+  const [multi, setMulti] = useState(false);
   const [token, setToken] = useState(params.get("token") ?? presetToken ?? "");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -124,7 +125,16 @@ function CheckinInner({
   }, [files]);
 
   function toggleRoom(n: string) {
-    setRoomNumbers((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
+    // Single mode: one room only (tapping another replaces it).
+    // Multi mode: tap to add, tap again (or ×) to remove.
+    setRoomNumbers((prev) =>
+      !multi ? [n] : prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n],
+    );
+  }
+
+  function switchMode(m: "single" | "multi") {
+    setMulti(m === "multi");
+    if (m === "single") setRoomNumbers((prev) => prev.slice(0, 1));
   }
 
   // ---------- validation (mandatory fields go red) ----------
@@ -229,11 +239,48 @@ function CheckinInner({
         {/* 1 — Rooms first (multi-select), from admin inventory */}
         <Card className="grid gap-3">
           <Field
-            label="Your room(s) * — tap all yours"
+            label="Your room(s) *"
             error={tried && !roomsOk ? "Select at least one room" : undefined}
           >
             {rooms.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="grid gap-2.5">
+                <div className="flex w-fit gap-1 rounded-[10px] border border-[#e8e8e4] bg-[#f7f7f5] p-1">
+                  {(["single", "multi"] as const).map((m) => {
+                    const active = multi ? m === "multi" : m === "single";
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => switchMode(m)}
+                        className={cn(
+                          "rounded-[7px] px-3 py-1.5 text-[13px] font-bold",
+                          active ? "bg-[#1f6f4a] text-white" : "text-[#6b6f6b]",
+                        )}
+                      >
+                        {m === "single" ? "Single room" : "Multiple rooms"}
+                      </button>
+                    );
+                  })}
+                </div>
+                {multi && sortedRooms.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {sortedRooms.map((n) => (
+                      <span
+                        key={n}
+                        className="chip !border-[#1f6f4a] !bg-[#e7f2ec] !py-1.5 !text-[#1f6f4a]"
+                      >
+                        Room {n}
+                        <button
+                          aria-label={`Remove room ${n}`}
+                          onClick={() => toggleRoom(n)}
+                          className="rounded-full p-0.5 hover:bg-[#1f6f4a]/10"
+                        >
+                          <X size={13} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
                 {rooms.map((r) => {
                   const on = roomNumbers.includes(r.number);
                   return (
@@ -256,6 +303,7 @@ function CheckinInner({
                     </button>
                   );
                 })}
+                </div>
               </div>
             ) : (
               <input

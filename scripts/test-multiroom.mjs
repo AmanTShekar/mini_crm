@@ -15,7 +15,11 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMo
 
 await page.goto(`${BASE}/checkin`, { waitUntil: "networkidle" });
 await page.waitForTimeout(800);
+await page.getByRole("button", { name: "Multiple rooms", exact: true }).click();
 await page.locator("button", { hasText: "101" }).click();
+await page.locator("button", { hasText: "102" }).click();
+// remove + re-add 102 via the × pill to verify removal works
+await page.getByRole("button", { name: "Remove room 102", exact: true }).click();
 await page.locator("button", { hasText: "102" }).click();
 await page.getByPlaceholder(/as per govt id/i).fill("Two Rooms One Go");
 await page.getByPlaceholder(/10-digit mobile/i).fill("9998881116");
