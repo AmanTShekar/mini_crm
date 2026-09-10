@@ -1,4 +1,4 @@
-// One-go multi-room test: select 2 rooms, submit ONCE, expect 2 stays.
+// Dropdown multi-room test: open list, tick 2 rooms, submit ONCE.
 // Plus atomicity: invalid room in batch → 400, nothing created.
 // Run: AUDIT_BASE=http://localhost:3102 node scripts/test-multiroom.mjs
 import { chromium } from "playwright-core";
@@ -15,12 +15,29 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMo
 
 await page.goto(`${BASE}/checkin`, { waitUntil: "networkidle" });
 await page.waitForTimeout(800);
+
+// single mode: pick 101 (dropdown auto-closes)
+await page.getByRole("button", { name: "Select rooms", exact: true }).click();
+await page.locator(".absolute.top-full button").nth(0).click();
+await page.waitForTimeout(300);
+const closedAfterSingle = (await page.locator(".absolute.top-full").count()) === 0;
+console.log("single pick auto-closes:", closedAfterSingle);
+
+// multi mode: tick 102 (stays open), remove via ×, re-add
 await page.getByRole("button", { name: "Multiple rooms", exact: true }).click();
-await page.locator("button", { hasText: "101" }).click();
-await page.locator("button", { hasText: "102" }).click();
-// remove + re-add 102 via the × pill to verify removal works
+await page.getByRole("button", { name: "Select rooms", exact: true }).click();
+await page.locator(".absolute.top-full button").nth(1).click();
+await page.getByRole("button", { name: "Close room list", exact: true }).click();
+const pills = await page.locator("text=Room 102").count();
 await page.getByRole("button", { name: "Remove room 102", exact: true }).click();
-await page.locator("button", { hasText: "102" }).click();
+await page.waitForTimeout(300);
+const pillGone = (await page.locator("text=Room 102").count()) < pills;
+console.log("× pill removes room:", pillGone);
+await page.getByRole("button", { name: "Select rooms", exact: true }).click();
+await page.locator(".absolute.top-full button").nth(1).click();
+await page.keyboard.press("Escape");
+await page.getByRole("button", { name: "Close room list", exact: true }).click();
+
 await page.getByPlaceholder(/as per govt id/i).fill("Two Rooms One Go");
 await page.getByPlaceholder(/10-digit mobile/i).fill("9998881116");
 await page.getByPlaceholder(/you@example\.com/i).fill("two@go.com");
@@ -32,7 +49,6 @@ await page.waitForTimeout(1500);
 const done = await page.getByRole("heading", { name: /checked in/i }).count();
 const roomsShown = await page.locator("text=Rooms 101, 102").count();
 console.log("one-go done screen:", done === 1, "| rooms listed:", roomsShown >= 1);
-await page.screenshot({ path: "C:\\Users\\Asus\\AppData\\Local\\Temp\\x-multiroom.png" });
 
 const q1 = await (await page.request.get(`${BASE}/api/stays?q=9998881116`)).json();
 const mine = q1.stays.filter((s) => s.clientName === "Two Rooms One Go");

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Plus, Upload, X } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, Plus, Upload, X } from "lucide-react";
 import { Card, Field, PrimaryButton } from "@/components/ui";
 import TopBar from "@/components/TopBar";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,7 @@ function CheckinInner({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomNumbers, setRoomNumbers] = useState<string[]>([]);
   const [multi, setMulti] = useState(false);
+  const [roomsOpen, setRoomsOpen] = useState(false);
   const [token, setToken] = useState(params.get("token") ?? presetToken ?? "");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -280,29 +281,71 @@ function CheckinInner({
                     ))}
                   </div>
                 )}
-                <div className="flex flex-wrap gap-2">
-                {rooms.map((r) => {
-                  const on = roomNumbers.includes(r.number);
-                  return (
-                    <button
-                      key={r.id}
-                      onClick={() => toggleRoom(r.number)}
+                <div className="relative">
+                  <button
+                    onClick={() => setRoomsOpen((o) => !o)}
+                    aria-expanded={roomsOpen}
+                    aria-label="Select rooms"
+                    className={cn(
+                      "input flex items-center justify-between gap-2 text-left",
+                      tried && !roomsOk && "input-error",
+                      sortedRooms.length === 0 && "!font-normal text-[#9a9d9a]",
+                    )}
+                  >
+                    <span className="truncate">
+                      {sortedRooms.length === 0
+                        ? "Select room(s)…"
+                        : !multi || sortedRooms.length === 1
+                          ? `Room ${sortedRooms[0]}`
+                          : `${sortedRooms.length} rooms · ${sortedRooms.join(", ")}`}
+                    </span>
+                    <ChevronDown
+                      size={16}
                       className={cn(
-                        "rounded-[10px] border px-4 py-2.5 text-[15px] font-bold",
-                        on
-                          ? "border-[#1f6f4a] bg-[#1f6f4a] text-white"
-                          : tried && !roomsOk
-                            ? "border-[#d92d20] bg-[#fffafa]"
-                            : "border-[#e8e8e4] bg-white",
+                        "shrink-0 text-[#6b6f6b] transition-transform",
+                        roomsOpen && "rotate-180",
                       )}
-                    >
-                      {r.number}
-                      <span className={cn("ml-1.5 text-xs font-semibold", on ? "text-white/80" : "text-[#6b6f6b]")}>
-                        {r.type}
-                      </span>
-                    </button>
-                  );
-                })}
+                    />
+                  </button>
+                  {roomsOpen && (
+                    <>
+                      <button
+                        aria-label="Close room list"
+                        onClick={() => setRoomsOpen(false)}
+                        className="fixed inset-0 z-30 cursor-default bg-transparent"
+                      />
+                      <div className="absolute inset-x-0 top-full z-40 mt-1.5 max-h-64 overflow-y-auto rounded-[10px] border border-[#e8e8e4] bg-white p-1.5 shadow-lg">
+                        {rooms.map((r) => {
+                          const on = roomNumbers.includes(r.number);
+                          return (
+                            <button
+                              key={r.id}
+                              onClick={() => {
+                                toggleRoom(r.number);
+                                if (!multi) setRoomsOpen(false);
+                              }}
+                              className="flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2.5 text-left hover:bg-[#f7f7f5]"
+                            >
+                              <span
+                                className={cn(
+                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border",
+                                  on
+                                    ? "border-[#1f6f4a] bg-[#1f6f4a] text-white"
+                                    : "border-[#c9c9c4] bg-white",
+                                )}
+                              >
+                                {on && <Check size={13} strokeWidth={3} />}
+                              </span>
+                              <span className="text-[15px] font-bold">Room {r.number}</span>
+                              <span className="ml-auto shrink-0 text-xs font-semibold text-[#6b6f6b]">
+                                {r.type}{r.floor ? ` · ${r.floor}` : ""}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
