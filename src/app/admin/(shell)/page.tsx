@@ -45,7 +45,7 @@ export default async function AdminToday() {
         ))}
       </div>
 
-      <div className="grid gap-2 lg:grid-cols-2">
+      <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
         {rooms.map((room) => {
           const stay = stayByRoom.get(room.id);
           const link = stay

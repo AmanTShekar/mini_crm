@@ -43,7 +43,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-1 border-r border-[#e8e8e4] bg-white/80 p-4 backdrop-blur md:flex">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-1 border-r border-[#e8e8e4] bg-white/80 p-4 backdrop-blur md:flex xl:w-72">
         <div className="mb-3 px-2">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#6b6f6b]">
             Stay CRM
@@ -169,7 +169,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
         )}
 
-        <main className="mx-auto w-full max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 md:max-w-none md:px-8 md:pt-6 xl:max-w-6xl">
+        <main className="mx-auto w-full max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 md:max-w-none md:px-8 md:pt-6 2xl:max-w-[1600px]">
           {children}
         </main>
 

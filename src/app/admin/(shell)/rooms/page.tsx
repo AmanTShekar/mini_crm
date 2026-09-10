@@ -86,7 +86,7 @@ export default function RoomsPage() {
         </PrimaryButton>
       </Card>
 
-      <div className="grid gap-2 lg:grid-cols-2">
+      <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
         {loaded && rooms.length === 0 && (
           <Card>
             <p className="font-bold">No rooms yet</p>

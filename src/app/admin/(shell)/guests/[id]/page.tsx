@@ -22,7 +22,7 @@ export default async function GuestDetail({ params }: { params: Promise<{ id: st
   const link = `${proto}://${host}/c/${stay.token}`;
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3 xl:mx-auto xl:max-w-5xl">
       <TopBar title="Guest file" fallback="/admin/guests" />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
