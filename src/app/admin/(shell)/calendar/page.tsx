@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Stay } from "@/lib/types";
+import { todayISO } from "@/lib/utils";
 import { Card, StatusChip } from "@/components/ui";
 import { CallButton } from "@/components/actions";
 
@@ -21,11 +22,27 @@ export default function CalendarPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(todayISO());
   const [stays, setStays] = useState<Stay[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   const cells = useMemo(() => monthGrid(year, month), [year, month]);
+
+  const monthStats = useMemo(() => {
+    const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+    let total = 0;
+    let best = "";
+    let bestN = 0;
+    for (const [date, n] of Object.entries(counts)) {
+      if (!date.startsWith(prefix)) continue;
+      total += n;
+      if (n > bestN) {
+        bestN = n;
+        best = date;
+      }
+    }
+    return { total, best, bestN };
+  }, [counts, year, month]);
 
   useEffect(() => {
     // Load all stays once (demo scale) and bucket client-side.
@@ -97,6 +114,12 @@ export default function CalendarPage() {
             ),
           )}
         </div>
+        {monthStats.total > 0 && (
+          <p className="mt-2 border-t border-[#f1f1ee] pt-2 text-center text-xs font-semibold text-[#6b6f6b]">
+            {monthStats.total} stay{monthStats.total > 1 ? "s" : ""} this month
+            {monthStats.best ? ` · busiest ${monthStats.best} (${monthStats.bestN})` : ""}
+          </p>
+        )}
       </Card>
 
       <div className="grid content-start gap-2">
