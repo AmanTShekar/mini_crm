@@ -27,7 +27,10 @@ console.log("single pick auto-closes:", closedAfterSingle);
 await page.getByRole("button", { name: "Multiple rooms", exact: true }).click();
 await page.getByRole("button", { name: "Select rooms", exact: true }).click();
 await page.locator(".absolute.top-full button").nth(1).click();
-await page.getByRole("button", { name: "Close room list", exact: true }).click();
+await page.mouse.click(20, 700); // tap outside panel → closes via backdrop
+await page.waitForTimeout(300);
+const panelClosed = (await page.locator(".absolute.top-full").count()) === 0;
+console.log("outside tap closes list:", panelClosed);
 const pills = await page.locator("text=Room 102").count();
 await page.getByRole("button", { name: "Remove room 102", exact: true }).click();
 await page.waitForTimeout(300);
@@ -35,8 +38,7 @@ const pillGone = (await page.locator("text=Room 102").count()) < pills;
 console.log("× pill removes room:", pillGone);
 await page.getByRole("button", { name: "Select rooms", exact: true }).click();
 await page.locator(".absolute.top-full button").nth(1).click();
-await page.keyboard.press("Escape");
-await page.getByRole("button", { name: "Close room list", exact: true }).click();
+await page.mouse.click(20, 700);
 
 await page.getByPlaceholder(/as per govt id/i).fill("Two Rooms One Go");
 await page.getByPlaceholder(/10-digit mobile/i).fill("9998881116");
