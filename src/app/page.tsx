@@ -3,7 +3,7 @@ import { BedDouble, QrCode } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-10 pt-10">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-10 pt-10 md:max-w-2xl">
       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#6b6f6b]">
         Stay CRM
       </p>
@@ -17,7 +17,7 @@ export default function Home() {
         everyone + ID. One entry per room per day.
       </p>
 
-      <div className="mt-6 grid gap-3">
+      <div className="mt-6 grid gap-3 md:grid-cols-2">
         <Link href="/checkin" className="box flex items-center gap-3 p-4">
           <span className="flex h-11 w-11 items-center justify-center rounded-[10px] bg-[#e7f2ec] text-[#1f6f4a]">
             <QrCode size={22} />

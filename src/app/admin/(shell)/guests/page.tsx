@@ -252,7 +252,7 @@ function GuestsInner() {
             <Repeat2 size={15} className="text-[#1f6f4a]" />
             Repeat customers · {crm.repeat.length}
           </p>
-          <div className="grid gap-2 md:grid-cols-2">
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
             {crm.repeat.slice(0, 10).map((g, i) => (
               <Card key={g.phone} className="flex !p-3 flex-col">
                 <div className="flex items-center gap-2.5">
@@ -336,7 +336,7 @@ function GuestsInner() {
           {g.days.map((d) => (
             <div key={d.date} className="grid gap-2">
               <p className="text-[13px] font-semibold">{d.date} · {d.stays.length}</p>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                 {d.stays.map((s) => {
                   const visits = crm.visitsByPhone.get(phoneKey(s.clientPhone)) ?? 1;
                   return (

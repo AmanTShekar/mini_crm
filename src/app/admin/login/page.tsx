@@ -1,31 +1,45 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Card, Field, PrimaryButton } from "@/components/ui";
 import TopBar from "@/components/TopBar";
 
-export default function LoginPage() {
+function LoginInner() {
   const [email, setEmail] = useState("admin@stay.local");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const params = useSearchParams();
+  const callbackUrl = params.get("callbackUrl") || "/admin";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setBusy(false);
-    if (res?.ok) router.push("/admin");
-    else setError("Wrong email or password. Try the demo login below.");
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl,
+      });
+      if (res?.error) {
+        setError("Wrong email or password. Try the demo login below.");
+      } else if (res?.ok) {
+        router.push(res.url || callbackUrl);
+        router.refresh();
+      } else {
+        setError("Couldn't sign in — check your connection and try again.");
+      }
+    } catch {
+      setError("Couldn't reach the server. Is it running?");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -45,10 +59,7 @@ export default function LoginPage() {
               autoComplete="username"
             />
           </Field>
-          <Field
-            label="Password"
-            error={error ?? undefined}
-          >
+          <Field label="Password" error={error ?? undefined}>
             <input
               className={cn("input", error && "input-error")}
               type="password"
@@ -65,5 +76,13 @@ export default function LoginPage() {
         Demo: admin@stay.local / admin123
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginInner />
+    </Suspense>
   );
 }

@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStay } from "@/lib/data";
+import { getStay, listStaysByPhone } from "@/lib/data";
 import { Card, StatusChip } from "@/components/ui";
 import TopBar from "@/components/TopBar";
 import { CallButton, WhatsAppButton } from "@/components/actions";
@@ -13,6 +14,7 @@ export default async function GuestDetail({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const stay = await getStay(id);
   if (!stay) notFound();
+  const others = await listStaysByPhone(stay.clientPhone, stay.id);
 
   const h = await headers();
   const proto = h.get("x-forwarded-proto") ?? "http";
@@ -76,7 +78,7 @@ export default async function GuestDetail({ params }: { params: Promise<{ id: st
         {stay.idProofUrls.length === 0 && (
           <p className="mt-1 text-sm text-[#6b6f6b]">No uploads yet.</p>
         )}
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-3">
           {stay.idProofUrls.map((u, i) => (
             <a key={i} href={u} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-[10px] border border-[#e8e8e4]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -85,6 +87,43 @@ export default async function GuestDetail({ params }: { params: Promise<{ id: st
           ))}
         </div>
       </Card>
+
+      {others.length > 0 && (
+        <Card>
+          <p className="text-[13px] font-bold">
+            Other bookings by this guest ({others.length})
+          </p>
+          <p className="text-xs text-[#6b6f6b]">
+            Same phone number · other rooms and dates
+          </p>
+          <div className="mt-2 grid gap-2 md:grid-cols-2">
+            {others.map((o) => (
+              <div
+                key={o.id}
+                className="flex items-center justify-between gap-2 rounded-[10px] border border-[#e8e8e4] p-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold">
+                    Room {o.roomNumber} · {o.checkInDate}
+                  </p>
+                  <p className="text-xs text-[#6b6f6b]">
+                    {(o.members.length || 1)} guest(s)
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <StatusChip status={o.status} />
+                  <Link
+                    href={`/admin/guests/${o.id}`}
+                    className="btn-ghost !py-1.5 text-[13px]"
+                  >
+                    Open
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

@@ -200,7 +200,24 @@ function CheckinInner({
             Room {roomNumber} · {name}. Your details are saved with the front desk.
             Enjoy your stay!
           </p>
-          <Link href="/" className="btn-ghost mt-4 inline-block">
+          <PrimaryButton
+            className="mt-4"
+            onClick={() => {
+              // Book another room with the same details (multi-room stay)
+              setDone(false);
+              setRoomNumber("");
+              setToken("");
+              setMembers([]);
+              setFiles([]);
+              setExistingProofs(0);
+              setTried(false);
+              setEmailTouched(false);
+              window.scrollTo({ top: 0 });
+            }}
+          >
+            Book another room
+          </PrimaryButton>
+          <Link href="/" className="btn-ghost mt-2 inline-block w-full">
             ← Back to home
           </Link>
         </Card>
@@ -209,7 +226,7 @@ function CheckinInner({
   }
 
   return (
-    <div className="mx-auto w-full max-w-md px-5 py-6">
+    <div className="mx-auto w-full max-w-md px-5 py-6 md:max-w-xl">
       <TopBar title="Guest check-in" fallback="/" />
       <h1 className="mt-2 text-[22px] font-bold">Your stay details</h1>
       <p className="text-sm text-[#6b6f6b]">

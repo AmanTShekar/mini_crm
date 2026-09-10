@@ -196,6 +196,16 @@ export async function searchStays(query: string): Promise<Stay[]> {
   );
 }
 
+/** All stays for one guest (same phone), newest first — powers
+ *  multi-room visibility ("other bookings by this guest"). */
+export async function listStaysByPhone(phone: string, excludeId?: string): Promise<Stay[]> {
+  const digits = phone.replace(/\D/g, "").slice(-10);
+  return (await listStays()).filter(
+    (s) =>
+      s.clientPhone.replace(/\D/g, "").slice(-10) === digits && s.id !== excludeId,
+  );
+}
+
 export async function createPendingStay(roomNumber: string, phone: string, name = "Guest"): Promise<Stay> {
   const s = store();
   const room = s.rooms.find((r) => r.number === roomNumber);

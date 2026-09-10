@@ -169,7 +169,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
         )}
 
-        <main className="mx-auto w-full max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 md:max-w-none md:px-8 md:pt-6">
+        <main className="mx-auto w-full max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 md:max-w-none md:px-8 md:pt-6 xl:max-w-6xl">
           {children}
         </main>
 

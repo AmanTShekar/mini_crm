@@ -65,7 +65,7 @@ export default function RoomsPage() {
 
       <Card className="grid gap-3">
         <p className="text-[13px] font-bold">Bulk create (e.g. 101 → 110)</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Field label="From"><input className="input" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
           <Field label="To"><input className="input" value={to} onChange={(e) => setTo(e.target.value)} /></Field>
           <Field label="Floor"><input className="input" value={floor} onChange={(e) => setFloor(e.target.value)} /></Field>
@@ -86,7 +86,7 @@ export default function RoomsPage() {
         </PrimaryButton>
       </Card>
 
-      <div className="grid gap-2">
+      <div className="grid gap-2 lg:grid-cols-2">
         {loaded && rooms.length === 0 && (
           <Card>
             <p className="font-bold">No rooms yet</p>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import PwaRegister from "@/components/PwaRegister";
+import SwUpdatePrompt from "@/components/SwUpdatePrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,7 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><Providers>{children}<PwaRegister /></Providers></body>
+      <body className="min-h-full flex flex-col"><Providers>{children}<PwaRegister /><SwUpdatePrompt /></Providers></body>
     </html>
   );
 }

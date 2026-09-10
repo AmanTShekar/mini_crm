@@ -63,6 +63,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
+      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
       <Card>
         <p className="mb-2 text-center text-sm font-bold">
           {new Date(year, month, 1).toLocaleString("en-IN", { month: "long", year: "numeric" })}
@@ -98,19 +99,23 @@ export default function CalendarPage() {
         </div>
       </Card>
 
-      {selected && (
-        <div className="grid gap-2">
+      <div className="grid content-start gap-2">
+        {!selected && (
+          <Card><p className="text-sm text-[#6b6f6b]">Tap a date to see its bookings.</p></Card>
+        )}
+        {selected && (
+          <>
           <p className="text-sm font-bold">
             {selected} · {dayStays.length} check-in(s)
           </p>
           {dayStays.map((s) => (
             <Card key={s.id} className="!p-3">
               <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="font-bold">
+                <div className="min-w-0">
+                  <p className="truncate font-bold">
                     Room {s.roomNumber} · {s.clientName}
                   </p>
-                  <p className="text-xs text-[#6b6f6b]">
+                  <p className="truncate text-xs text-[#6b6f6b]">
                     {s.clientPhone} · {s.members.length || 1} guest(s)
                   </p>
                 </div>
@@ -127,8 +132,10 @@ export default function CalendarPage() {
           {dayStays.length === 0 && (
             <Card><p className="text-sm text-[#6b6f6b]">No bookings on this date.</p></Card>
           )}
-        </div>
-      )}
+          </>
+        )}
+      </div>
+      </div>
     </div>
   );
 }
